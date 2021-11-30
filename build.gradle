@@ -1,0 +1,37 @@
+import java.nio.file.Files
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
+
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+ext.getLastMod = { File file ->
+    if (file == null || !file.exists())
+        return null;
+    return Files.readAttributes(file.toPath(), BasicFileAttributes.class).lastModifiedTime();
+}
+
+File appClass = file("build/classes/java/main/com/Application.class");
+boolean exists = appClass.exists();
+FileTime lastMod = getLastMod(appClass);
+println "Last mod: " + lastMod
+compileJava {
+}
+
+task checkLastMod {
+    dependsOn classes
+    doLast {
+        FileTime updateLastMod = getLastMod(appClass);
+        println "Last mod: " + updateLastMod
+        if (exists)
+            assert lastMod.equals(updateLastMod);
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
